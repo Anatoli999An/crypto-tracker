@@ -2,43 +2,39 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Crypto Donation Tracker</title>
 
   <!-- Leaflet -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet"/>
 
   <style>
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #05080a;
-      --panel: #091115;
-      --border: #11353d;
+      --bg: #080d0f;
+      --panel: #0d1618;
+      --border: #0e3038;
       --accent: #00ffd5;
       --accent2: #00b8a0;
+      --dim: #1a2e33;
       --text: #c8e8e3;
-      --muted: #5a8c87;
-      --shadow: rgba(0, 255, 213, 0.16);
+      --muted: #4a7a75;
       --font-mono: 'Share Tech Mono', monospace;
       --font-ui: 'Rajdhani', sans-serif;
     }
 
     body {
-      background: radial-gradient(circle at top, rgba(0,255,213,0.08), transparent 25%),
-                  linear-gradient(180deg, #070b0f 0%, #05080a 100%);
+      background: var(--bg);
       color: var(--text);
       font-family: var(--font-ui);
+      font-size: 15px;
       min-height: 100vh;
-      overflow: hidden;
+      overflow-x: hidden;
     }
 
     body::before {
@@ -46,9 +42,9 @@
       position: fixed;
       inset: 0;
       background-image:
-        linear-gradient(rgba(0,255,213,0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,255,213,0.04) 1px, transparent 1px);
-      background-size: 48px 48px;
+        linear-gradient(rgba(0,255,213,0.025) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,213,0.025) 1px, transparent 1px);
+      background-size: 40px 40px;
       pointer-events: none;
       z-index: 0;
     }
@@ -57,237 +53,219 @@
       position: relative;
       z-index: 10;
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      padding: 18px 28px;
-      border-bottom: 1px solid rgba(0,255,213,0.12);
-      background: rgba(8, 14, 18, 0.92);
-      backdrop-filter: blur(12px);
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(8,13,15,0.92);
+      backdrop-filter: blur(6px);
     }
 
     .logo {
       font-family: var(--font-mono);
-      letter-spacing: 4px;
       font-size: 18px;
       color: var(--accent);
+      letter-spacing: 3px;
       text-transform: uppercase;
     }
     .logo span { color: var(--muted); }
 
-    .status {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .status-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+      display: inline-block;
+      margin-right: 8px;
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:.4; transform:scale(1.4); }
+    }
+
+    .header-right {
       font-family: var(--font-mono);
       font-size: 12px;
       color: var(--muted);
-    }
-
-    .status-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: var(--accent);
-      box-shadow: 0 0 12px rgba(0,255,213,0.6);
-      animation: pulse 1.8s infinite ease-in-out;
-    }
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); opacity: 1; }
-      50% { transform: scale(1.4); opacity: 0.45; }
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .layout {
       position: relative;
       z-index: 1;
       display: grid;
-      grid-template-columns: 340px 1fr;
-      height: calc(100vh - 76px);
-      min-height: 640px;
+      grid-template-columns: 320px 1fr;
+      grid-template-rows: auto 1fr;
+      gap: 0;
+      height: calc(100vh - 57px);
     }
 
     .sidebar {
-      background: rgba(9, 17, 21, 0.96);
-      border-right: 1px solid rgba(0,255,213,0.1);
+      grid-row: 1 / 3;
+      border-right: 1px solid var(--border);
       display: flex;
       flex-direction: column;
-      overflow: hidden;
-      backdrop-filter: blur(16px);
+      gap: 0;
+      overflow-y: auto;
+      background: var(--panel);
     }
 
     .panel {
-      padding: 22px;
-      border-bottom: 1px solid rgba(0,255,213,0.08);
+      border-bottom: 1px solid var(--border);
+      padding: 20px;
     }
 
     .panel-title {
       font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 3px;
       color: var(--muted);
-      letter-spacing: 2px;
       text-transform: uppercase;
-      font-size: 11px;
       margin-bottom: 14px;
     }
 
     .counter-wrap {
       display: flex;
-      align-items: flex-end;
-      gap: 10px;
-      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 6px;
     }
     #counter {
       font-family: var(--font-mono);
-      font-size: 52px;
+      font-size: 48px;
       color: var(--accent);
-      text-shadow: 0 0 18px rgba(0,255,213,0.24);
+      text-shadow: 0 0 20px rgba(0,255,213,0.4);
       line-height: 1;
+      transition: all 0.3s;
     }
     .counter-label {
-      font-family: var(--font-mono);
       font-size: 12px;
       color: var(--muted);
-      text-transform: uppercase;
-      letter-spacing: 1.5px;
-      margin-bottom: 6px;
+      font-family: var(--font-mono);
     }
 
     .wallet-card {
-      background: rgba(4, 13, 16, 0.98);
-      border: 1px solid rgba(0,255,213,0.14);
-      border-radius: 14px;
-      padding: 18px;
-      box-shadow: 0 0 30px rgba(0,255,213,0.06);
+      background: var(--dim);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 14px;
     }
 
     .wallet-address {
       font-family: var(--font-mono);
-      font-size: 13px;
+      font-size: 11px;
       color: var(--accent);
-      word-break: break-word;
+      word-break: break-all;
       line-height: 1.6;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .wallet-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+      display: flex;
+      gap: 8px;
     }
 
     .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      padding: 12px 14px;
-      border: 1px solid rgba(0,255,213,0.22);
-      background: rgba(0,255,213,0.06);
+      flex: 1;
+      padding: 8px 10px;
+      border: 1px solid var(--accent2);
+      background: transparent;
       color: var(--accent);
       font-family: var(--font-mono);
       font-size: 11px;
-      text-transform: uppercase;
       letter-spacing: 1px;
-      border-radius: 8px;
       cursor: pointer;
-      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      border-radius: 3px;
+      transition: all 0.2s;
+      text-transform: uppercase;
     }
     .btn:hover {
-      background: rgba(0,255,213,0.14);
-      box-shadow: 0 0 18px rgba(0,255,213,0.18);
-      transform: translateY(-1px);
+      background: rgba(0,255,213,0.08);
+      border-color: var(--accent);
+      box-shadow: 0 0 8px rgba(0,255,213,0.2);
     }
+    .btn:active { transform: scale(0.97); }
 
     .qr-wrap {
       display: flex;
       justify-content: center;
-      margin-top: 18px;
+      margin-top: 14px;
     }
     .qr-wrap img {
-      width: 148px;
-      height: 148px;
-      border: 2px solid rgba(0,255,213,0.18);
-      border-radius: 16px;
-      background: #010608;
-      box-shadow: inset 0 0 12px rgba(0,255,213,0.08);
+      border: 2px solid var(--border);
+      border-radius: 4px;
+      filter: invert(1) hue-rotate(140deg) saturate(2);
+      width: 140px; height: 140px;
     }
 
     #feed {
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      max-height: calc(100vh - 460px);
-      overflow-y: auto;
-      padding-right: 4px;
+      gap: 0;
     }
 
     .feed-item {
-      background: rgba(0,255,213,0.04);
-      border: 1px solid rgba(0,255,213,0.12);
-      border-radius: 10px;
-      padding: 14px 16px;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border);
       font-family: var(--font-mono);
-      font-size: 12px;
-      line-height: 1.5;
+      font-size: 11px;
       color: var(--text);
-      box-shadow: 0 0 14px rgba(0,255,213,0.06);
-      word-break: break-word;
+      line-height: 1.6;
+      animation: slideIn 0.4s ease;
+    }
+    .feed-item:first-child {
+      border-top: 1px solid var(--accent2);
+      background: rgba(0,255,213,0.04);
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateX(-10px); }
+      to   { opacity:1; transform:translateX(0); }
     }
     .feed-item strong { color: var(--accent); }
 
     #map {
-      position: relative;
-      background: #04090d;
-      min-height: 100%;
-    }
-    #map .leaflet-container {
-      height: 100%;
-      width: 100%;
+      z-index: 1;
+      background: #060d10;
     }
 
-    .leaflet-tile-pane {
-      filter: invert(1) hue-rotate(180deg) saturate(0.5) brightness(0.75);
-    }
+    .leaflet-tile-pane { filter: invert(1) hue-rotate(180deg) saturate(0.5) brightness(0.7); }
     .leaflet-control-zoom a {
-      background: rgba(9,17,21,0.95) !important;
+      background: var(--panel) !important;
       color: var(--accent) !important;
-      border-color: rgba(0,255,213,0.14) !important;
+      border-color: var(--border) !important;
     }
 
     #toast {
       display: none;
       position: fixed;
+      bottom: 30px;
       left: 50%;
-      bottom: 28px;
       transform: translateX(-50%);
       background: var(--accent);
       color: #000;
       font-family: var(--font-mono);
       font-size: 12px;
-      padding: 12px 20px;
-      border-radius: 999px;
-      z-index: 999;
-      box-shadow: 0 0 24px rgba(0,255,213,0.3);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
+      padding: 10px 22px;
+      border-radius: 3px;
+      z-index: 9999;
+      letter-spacing: 1px;
+      box-shadow: 0 0 20px rgba(0,255,213,0.5);
     }
 
-    ::-webkit-scrollbar {
-      width: 8px;
-    }
-    ::-webkit-scrollbar-track {
-      background: rgba(0,0,0,0.12);
-    }
-    ::-webkit-scrollbar-thumb {
-      background: rgba(0,255,213,0.2);
-      border-radius: 999px;
-    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--panel); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent2); }
   </style>
 </head>
 <body>
+
   <header>
     <div class="logo">CRYPTO<span>//</span>TRACK</div>
-    <div class="status">
-      <span class="status-dot"></span>
-      <span>LIVE · TRC20 · TRON NETWORK</span>
+    <div class="header-right">
+      <span class="status-dot"></span>LIVE · TRC20 · TRON NETWORK
     </div>
   </header>
 
@@ -300,27 +278,24 @@
           <div class="counter-label">USDT</div>
         </div>
       </div>
-
       <div class="panel">
         <div class="panel-title">// wallet · TRC20</div>
         <div class="wallet-card">
           <div class="wallet-address" id="walletText">—</div>
           <div class="wallet-actions">
-            <button class="btn" id="copyBtn">⧉ Copy</button>
-            <button class="btn" id="scanBtn">↗️ Tronscan</button>
+            <button class="btn" onclick="copyWallet()">⧉ Copy</button>
+            <button class="btn" onclick="openTronscan()">↗️ Scan</button>
           </div>
         </div>
         <div class="qr-wrap">
-          <img id="qr" src="" alt="QR-код кошелька" />
+          <img id="qr" src="" alt="QR"/>
         </div>
       </div>
-
-      <div class="panel" style="flex: 1; display: flex; flex-direction: column;">
+      <div class="panel" style="flex:1; border-bottom:none;">
         <div class="panel-title">// live feed</div>
         <div id="feed"></div>
       </div>
     </aside>
-
     <div id="map"></div>
   </div>
 
@@ -328,57 +303,35 @@
 
   <script>
     const wallet = "TX7cDUq71NwRNTi5QSev6ziJMqtMWF7GEj";
-    const walletText = document.getElementById("walletText");
+
+    document.getElementById("walletText").innerText = wallet || "Wallet not configured";
+
+    const qrUrl = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(wallet);
     const qr = document.getElementById("qr");
-    const feed = document.getElementById("feed");
-    const toast = document.getElementById("toast");
-    const copyBtn = document.getElementById("copyBtn");
-    const scanBtn = document.getElementById("scanBtn");
-    let total = 0;
-    let seen = new Set();
+    qr.src = qrUrl;
 
-    walletText.textContent = wallet || "Wallet not configured";
-    qr.src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(wallet);
-    qr.alt = "QR-код TRC20 кошелька";
-
-    function showToast(message) {
-      toast.textContent = message;
+    function showToast(text) {
+      const toast = document.getElementById("toast");
+      toast.innerText = text;
       toast.style.display = "block";
-      setTimeout(() => {
-        toast.style.display = "none";
-      }, 1800);
+      setTimeout(() => { toast.style.display = "none"; }, 1800);
     }
 
-    copyBtn.addEventListener("click", () => {
-      if (!wallet) {
-        showToast("Кошелёк не настроен");
-        return;
-      }
+    function copyWallet() {
+      if (!wallet) { showToast("No wallet configured"); return; }
       navigator.clipboard.writeText(wallet)
-        .then(() => showToast("Адрес скопирован"))
-        .catch(() => showToast("Не удалось скопировать"));
-    });
+        .then(() => showToast("✓ Wallet copied"))
+        .catch(() => showToast("Copy failed"));
+    }
 
-    scanBtn.addEventListener("click", () => {
-      if (!wallet) {
-        showToast("Кошелёк не настроен");
-        return;
-      }
-      window.open(`https://tronscan.org/#/address/${wallet}`, "_blank");
-    });
+    function openTronscan() {
+      if (!wallet) { showToast("No wallet configured"); return; }
+      window.open(https://tronscan.org/#/address/${wallet}, "_blank");
+    }
 
+    let total = 0;
     function updateCounter() {
       document.getElementById("counter").innerText = "$" + total;
-    }
-
-    function addFeedItem(html) {
-      const item = document.createElement("div");
-      item.className = "feed-item";
-      item.innerHTML = html;
-      feed.prepend(item);
-      while (feed.children.length > 8) {
-        feed.removeChild(feed.lastChild);
-      }
     }
 
     const map = L.map("map").setView([20, 0], 2);
@@ -386,16 +339,28 @@
       attribution: "© OpenStreetMap",
     }).addTo(map);
 
+    const feed = document.getElementById("feed");
+
+    function addFeed(text) {
+      const item = document.createElement("div");
+      item.className = "feed-item";
+      item.innerHTML = text;
+      feed.prepend(item);
+      if (feed.children.length > 8) feed.removeChild(feed.lastChild);
+    }
+
+    let seen = new Set();
+
     async function loadTX() {
       if (!wallet) return;
       try {
-        const url = `https://api.trongrid.io/v1/accounts/${wallet}/transactions/trc20?limit=20`;
+        const url = https://api.trongrid.io/v1/accounts/${wallet}/transactions/trc20?limit=20;
         const res = await fetch(url);
         const data = await res.json();
-        if (!data.data || !Array.isArray(data.data)) return;
+        if (!data.data) return;
 
         data.data.forEach((tx) => {
-          if (!tx.transaction_id || seen.has(tx.transaction_id)) return;
+          if (seen.has(tx.transaction_id)) return;
           seen.add(tx.transaction_id);
 
           const lat = Math.random() * 140 - 70;
@@ -408,23 +373,15 @@
             fillOpacity: 0.9,
           })
             .addTo(map)
-            .bindPopup(`
-              <strong>Новая транзакция</strong><br />
-              TX: ${tx.transaction_id}<br />
-              From: ${tx.from_address || '—'}
-            `);
+            .bindPopup(<b>New Transaction</b><br>TX: ${tx.transaction_id}<br>From: ${tx.from_address});
 
-          addFeedItem(`
-            <strong>Новый донат</strong><br />
-            TX: ${tx.transaction_id.slice(0, 18)}...<br />
-            От: ${tx.from_address || 'неизвестно'}
-          `);
+          addFeed(<strong>New donation detected</strong><br>TX: ${tx.transaction_id.slice(0, 18)}...);
 
           total += 1;
           updateCounter();
         });
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.log(err);
       }
     }
 
@@ -432,4 +389,4 @@
     setInterval(loadTX, 12000);
   </script>
 </body>
-</html>
+<
